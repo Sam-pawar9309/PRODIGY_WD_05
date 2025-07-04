@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        /* Base Styles & Variables */
+        :root {
+            /* New Vibrant Light Mode Colors */
+            --primary-bg: #6366f1;
+            --secondary-bg: #8b5cf6;
+            --accent-bg: #a78bfa;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(255, 255, 255, 0.9);
+            --shadow-color: rgba(99, 102, 241, 0.2);
+            --icon-color: #4f46e5;
+            
+            /* Animation Durations */
+            --transition-fast: 0.3s;
+            --transition-medium: 0.5s;
+            --transition-slow: 1s;
+            
+            /* Spacing */
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+        }
+
+        /* Night Mode Colors */
+        [data-theme="night"] {
+            --primary-bg: #4c1d95;
+            --secondary-bg: #1e40af;
+            --accent-bg: #5b21b6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --card-bg: rgba(15, 23, 42, 0.3);
+            --card-border: rgba(148, 163, 184, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --icon-color: #c4b5fd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg), var(--accent-bg));
+            background-size: 300% 300%;
+            animation: gradientShift 25s ease infinite;
+            min-height: 100vh;
+            color: var(--text-primary);
+            transition: all var(--transition-slow) ease;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Layout */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg) 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-lg);
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* UI Components */
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-medium) ease;
+            animation: fadeInUp var(--transition-medium) ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px var(--shadow-color);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Current Weather Card */
+        .current-weather {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .weather-icon {
+            width: 120px;
+            height: 120px;
+            margin: var(--spacing-md) 0;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: 300;
+            margin: var(--spacing-sm) 0;
+            position: relative;
+            color: var(--icon-color);
+        }
+
+        .temperature::after {
+            content: "°";
+            position: absolute;
+            top: 0;
+            right: -1rem;
+            font-size: 2rem;
+        }
+
+        .weather-details {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: var(--spacing-lg);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+        }
+
+        .detail-item span:first-child {
+            color: var(--icon-color);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* Forecast Card */
+        .forecast-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .forecast-title {
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        .forecast-list {
+            display: flex;
+            gap: var(--spacing-md);
+            overflow-x: auto;
+            padding-bottom: var(--spacing-sm);
+        }
+
+        .forecast-item {
+            min-width: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--spacing-md);
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            transition: all var(--transition-fast) ease;
+            color: var(--text-primary);
+        }
+
+        .forecast-item:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .forecast-icon {
+            width: 50px;
+            height: 50px;
+            margin: var(--spacing-sm) 0;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Search & Controls */
+        .search-container {
+            position: relative;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-md);
+            padding-left: 3rem;
+            background: rgba(255, 255, 255, 0.5);
+            border: none;
+            border-radius: 50px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all var(--transition-fast) ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-secondary);
+            animation: placeholderPulse 3s infinite;
+        }
+
+        @keyframes placeholderPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+        }
+
+        .search-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--icon-color);
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform var(--transition-fast) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(30deg) scale(1.1);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Background Effects */
+        .background-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Cloud effects */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            filter: blur(12px);
+            animation: float linear infinite;
+            opacity: 0.6;
+        }
+
+        /* Rain effects */
+        .raindrop {
+            position: absolute;
+            width: 1px;
+            height: 15px;
+            background: linear-gradient(to bottom, transparent, rgba(200, 220, 255, 0.6));
+            animation: rain linear infinite;
+        }
+
+        @keyframes rain {
+            to {
+                transform: translateY(var(--window-height));
+            }
+        }
+
+        /* Sunbeam effects */
+        .sunbeam {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 220, 0.4), 
+                transparent);
+            transform-origin: left center;
+            animation: beam 8s ease-in-out infinite;
+            filter: blur(1px);
+        }
+
+        @keyframes beam {
+            0% {
+                transform: rotate(-15deg) scaleX(0);
+                opacity: 0;
+            }
+            30% {
+                opacity: 0.4;
+            }
+            100% {
+                transform: rotate(-15deg) scaleX(1);
+                opacity: 0;
+            }
+        }
+
+        /* Snow effects */
+        .snowflake {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            filter: blur(0.5px);
+            opacity: 0.8;
+            animation: snowfall linear infinite;
+        }
+
+        @keyframes snowfall {
+            to {
+                transform: translateY(var(--window-height)) rotate(360deg);
+            }
+        }
+
+        /* Sparkle effects */
+        .sparkle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            filter: blur(0.5px);
+            opacity: 0;
+            animation: sparkle 4s ease-out infinite;
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: translate(0, 0);
+                opacity: 0;
+            }
+            20% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(100px, -50px);
+                opacity: 0;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--icon-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-message {
+            color: #dc2626;
+            text-align: center;
+            padding: var(--spacing-lg);
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: 12px;
+            margin-top: var(--spacing-md);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        /* Pulse animation for temperature */
+        .pulse {
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-effects" id="backgroundEffects"></div>
+    
+    <div class="container">
+        <header>
+            <h1><strong>Weather Forecast</strong></h1>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <span class="material-icons-outlined">dark_mode</span>
+            </button>
+        </header>
+
+        <div class="search-container">
+            <span class="search-icon material-icons-outlined">search</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="Search for a city..." autocomplete="off">
+        </div>
+
+        <div class="main-content">
+            <div class="card current-weather" id="currentWeather">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <div class="card forecast-container" id="forecastContainer">
+                <h2 class="forecast-title">5-Day Forecast</h2>
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = 'e8a224cf2208738444d2ca82447eb394'; // Replace with your actual API key
+        const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+        
+        // DOM Elements
+        const currentWeatherEl = document.getElementById('currentWeather');
+        const forecastContainerEl = document.getElementById('forecastContainer');
+        const searchInput = document.getElementById('searchInput');
+        const themeToggle = document.getElementById('themeToggle');
+        const backgroundEffectsEl = document.getElementById('backgroundEffects');
+        
+        // State
+        let currentTheme = 'day';
+        let currentWeatherType = 'clear';
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set window height CSS variable for animations
+            updateWindowHeight();
+            window.addEventListener('resize', updateWindowHeight);
+            
+            // Initialize background effects
+            createBackgroundEffects();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Load default weather (London)
+            fetchWeatherData('London');
+        });
+        
+        function updateWindowHeight() {
+            document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
+        }
+        
+        function setupEventListeners() {
+            // Theme toggle
+            themeToggle.addEventListener('click', toggleTheme);
+            
+            // Search functionality
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && searchInput.value.trim()) {
+                    fetchWeatherData(searchInput.value.trim());
+                    searchInput.blur();
+                }
+            });
+        }
+        
+        function toggleTheme() {
+            currentTheme = currentTheme === 'day' ? 'night' : 'day';
+            document.body.setAttribute('data-theme', currentTheme);
+            
+            // Update icon
+            const icon = themeToggle.querySelector('span');
+            icon.textContent = currentTheme === 'day' ? 'dark_mode' : 'light_mode';
+            
+            // Add animation class
+            themeToggle.classList.add('animate');
+            setTimeout(() => {
+                themeToggle.classList.remove('animate');
+            }, 300);
+        }
+        
+        // Weather Data Fetching
+        async function fetchWeatherData(location) {
+            try {
+                showLoadingState();
+                
+                // Fetch current weather
+                const currentResponse = await fetch(
+                    `${BASE_URL}/weather?q=${location}&units=metric&appid=${API_KEY}`
+                );
+                
+                if (!currentResponse.ok) {
+                    throw new Error('City not found');
+                }
+                
+                const currentData = await currentResponse.json();
+                
+                // Fetch forecast
+                const forecastResponse = await fetch(
+                    `${BASE_URL}/forecast?q=${location}&units=metric&appid=${API_KEY}`
+                );
+                const forecastData = await forecastResponse.json();
+                
+                // Update UI
+                updateCurrentWeather(currentData);
+                updateForecast(forecastData);
+                updateBackgroundEffects(currentData.weather[0].main.toLowerCase());
+                
+            } catch (error) {
+                showErrorState(error.message);
+            }
+        }
+        
+        function showLoadingState() {
+            currentWeatherEl.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+            
+            forecastContainerEl.innerHTML = `
+                <h2 class="forecast-title">5-Day Forecast</h2>
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+        }
+        
+        function showErrorState(message) {
+            currentWeatherEl.innerHTML = `
+                <div class="error-message">
+                    ${message}. Please try another location.
+                </div>
+            `;
+            
+            forecastContainerEl.innerHTML = `
+                <h2 class="forecast-title">5-Day Forecast</h2>
+                <div class="error-message">
+                    Forecast unavailable
+                </div>
+            `;
+        }
+        
+        function updateCurrentWeather(data) {
+            const weatherType = data.weather[0].main.toLowerCase();
+            const iconCode = data.weather[0].icon;
+            
+            currentWeatherEl.innerHTML = `
+                <h2>${data.name}, ${data.sys.country}</h2>
+                <p>${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                <img class="weather-icon" src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="${data.weather[0].description}">
+                <div class="temperature">${Math.round(data.main.temp)}</div>
+                <p>${data.weather[0].description}</p>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <span class="material-icons-outlined">air</span>
+                        <span>${data.wind.speed} m/s</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="material-icons-outlined">water_drop</span>
+                        <span>${data.main.humidity}%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="material-icons-outlined">compress</span>
+                        <span>${data.main.pressure} hPa</span>
+                    </div>
+                </div>
+            `;
+            
+            // Add pulse animation to temperature
+            setTimeout(() => {
+                const tempElement = currentWeatherEl.querySelector('.temperature');
+                tempElement.classList.add('pulse');
+                setTimeout(() => {
+                    tempElement.classList.remove('pulse');
+                }, 1000);
+            }, 500);
+        }
+        
+        function updateForecast(data) {
+            // Group forecast by day
+            const dailyForecast = {};
+            data.list.forEach(item => {
+                const date = new Date(item.dt * 1000).toLocaleDateString();
+                if (!dailyForecast[date]) {
+                    dailyForecast[date] = {
+                        temp: [],
+                        weather: [],
+                        dt: item.dt
+                    };
+                }
+                dailyForecast[date].temp.push(item.main.temp);
+                dailyForecast[date].weather.push(item.weather[0]);
+            });
+            
+            // Get next 5 days
+            const forecastDays = Object.entries(dailyForecast).slice(0, 5);
+            
+            let forecastHTML = `
+                <h2 class="forecast-title">5-Day Forecast</h2>
+                <div class="forecast-list">
+            `;
+            
+            forecastDays.forEach(([date, dayData]) => {
+                const avgTemp = Math.round(dayData.temp.reduce((a, b) => a + b, 0) / dayData.temp.length);
+                const mostCommonWeather = getMostCommonWeather(dayData.weather);
+                
+                forecastHTML += `
+                    <div class="forecast-item">
+                        <p>${new Date(dayData.dt * 1000).toLocaleDateString('en-US', { weekday: 'short' })}</p>
+                        <img class="forecast-icon" src="https://openweathermap.org/img/wn/${mostCommonWeather.icon}@2x.png" alt="${mostCommonWeather.description}">
+                        <p>${Math.round(avgTemp)}°</p>
+                    </div>
+                `;
+            });
+            
+            forecastHTML += `</div>`;
+            forecastContainerEl.innerHTML = forecastHTML;
+            
+            // Add staggered animations to forecast items
+            const forecastItems = forecastContainerEl.querySelectorAll('.forecast-item');
+            forecastItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+            });
+        }
+        
+        function getMostCommonWeather(weatherArray) {
+            const count = {};
+            weatherArray.forEach(weather => {
+                const key = weather.id;
+                count[key] = (count[key] || 0) + 1;
+            });
+            
+            const mostCommonId = Object.keys(count).reduce((a, b) => count[a] > count[b] ? a : b);
+            return weatherArray.find(weather => weather.id.toString() === mostCommonId);
+        }
+        
+        // Background Effects
+        function createBackgroundEffects() {
+            // Create clouds
+            for (let i = 0; i < 10; i++) {
+                createCloud();
+            }
+            
+            // Create occasional sparkles
+            setInterval(createSparkle, 3000);
+            createSparkle();
+        }
+        
+        function updateBackgroundEffects(weatherType) {
+            if (currentWeatherType === weatherType) return;
+            currentWeatherType = weatherType;
+            
+            // Clear existing weather effects
+            backgroundEffectsEl.querySelectorAll('.raindrop, .sunbeam, .snowflake').forEach(el => el.remove());
+            
+            // Update gradient colors based on weather
+            const root = document.documentElement;
+            
+            switch(weatherType) {
+                case 'rain':
+                    if (currentTheme === 'day') {
+                        root.style.setProperty('--primary-bg', '#60a5fa');
+                        root.style.setProperty('--secondary-bg', '#3b82f6');
+                        root.style.setProperty('--accent-bg', '#93c5fd');
+                    } else {
+                        root.style.setProperty('--primary-bg', '#1e40af');
+                        root.style.setProperty('--secondary-bg', '#1e3a8a');
+                        root.style.setProperty('--accent-bg', '#3b82f6');
+                    }
+                    createRain();
+                    break;
+                    
+                case 'clear':
+                    if (currentTheme === 'day') {
+                        root.style.setProperty('--primary-bg', '#6366f1');
+                        root.style.setProperty('--secondary-bg', '#8b5cf6');
+                        root.style.setProperty('--accent-bg', '#a78bfa');
+                        createSunbeams();
+                    } else {
+                        root.style.setProperty('--primary-bg', '#4c1d95');
+                        root.style.setProperty('--secondary-bg', '#1e40af');
+                        root.style.setProperty('--accent-bg', '#5b21b6');
+                    }
+                    break;
+                    
+                case 'clouds':
+                    if (currentTheme === 'day') {
+                        root.style.setProperty('--primary-bg', '#818cf8');
+                        root.style.setProperty('--secondary-bg', '#a5b4fc');
+                        root.style.setProperty('--accent-bg', '#c7d2fe');
+                    } else {
+                        root.style.setProperty('--primary-bg', '#4338ca');
+                        root.style.setProperty('--secondary-bg', '#3730a3');
+                        root.style.setProperty('--accent-bg', '#4f46e5');
+                    }
+                    break;
+                    
+                case 'snow':
+                    if (currentTheme === 'day') {
+                        root.style.setProperty('--primary-bg', '#a5b4fc');
+                        root.style.setProperty('--secondary-bg', '#c7d2fe');
+                        root.style.setProperty('--accent-bg', '#e0e7ff');
+                    } else {
+                        root.style.setProperty('--primary-bg', '#3730a3');
+                        root.style.setProperty('--secondary-bg', '#312e81');
+                        root.style.setProperty('--accent-bg', '#4338ca');
+                    }
+                    createSnow();
+                    break;
+                    
+                default:
+                    if (currentTheme === 'day') {
+                        root.style.setProperty('--primary-bg', '#6366f1');
+                        root.style.setProperty('--secondary-bg', '#8b5cf6');
+                        root.style.setProperty('--accent-bg', '#a78bfa');
+                    } else {
+                        root.style.setProperty('--primary-bg', '#4c1d95');
+                        root.style.setProperty('--secondary-bg', '#1e40af');
+                        root.style.setProperty('--accent-bg', '#5b21b6');
+                    }
+            }
+        }
+        
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            
+            const size = Math.random() * 120 + 60;
+            const posX = Math.random() * window.innerWidth;
+            const posY = Math.random() * window.innerHeight * 0.7;
+            const duration = Math.random() * 60 + 60;
+            const delay = Math.random() * -60;
+            const opacity = 0.4 + Math.random() * 0.4;
+            
+            cloud.style.width = `${size}px`;
+            cloud.style.height = `${size * 0.6}px`;
+            cloud.style.left = `${posX}px`;
+            cloud.style.top = `${posY}px`;
+            cloud.style.animationDuration = `${duration}s`;
+            cloud.style.animationDelay = `${delay}s`;
+            cloud.style.opacity = opacity;
+            
+            backgroundEffectsEl.appendChild(cloud);
+        }
+        
+        function createSparkle() {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            
+            const posX = Math.random() * window.innerWidth;
+            const posY = Math.random() * window.innerHeight;
+            const duration = 2 + Math.random() * 2;
+            const size = 2 + Math.random() * 3;
+            
+            sparkle.style.left = `${posX}px`;
+            sparkle.style.top = `${posY}px`;
+            sparkle.style.width = `${size}px`;
+            sparkle.style.height = `${size}px`;
+            sparkle.style.animationDuration = `${duration}s`;
+            
+            backgroundEffectsEl.appendChild(sparkle);
+            
+            // Remove sparkle after animation completes
+            setTimeout(() => {
+                sparkle.remove();
+            }, duration * 1000);
+        }
+        
+        function createRain() {
+            for (let i = 0; i < 100; i++) {
+                const raindrop = document.createElement('div');
+                raindrop.className = 'raindrop';
+                
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * -100;
+                const duration = 0.5 + Math.random() * 0.5;
+                const delay = Math.random() * 2;
+                const length = 10 + Math.random() * 10;
+                
+                raindrop.style.left = `${posX}px`;
+                raindrop.style.top = `${posY}px`;
+                raindrop.style.height = `${length}px`;
+                raindrop.style.animationDuration = `${duration}s`;
+                raindrop.style.animationDelay = `${delay}s`;
+                
+                backgroundEffectsEl.appendChild(raindrop);
+            }
+        }
+        
+        function createSunbeams() {
+            if (currentTheme !== 'day') return;
+            
+            for (let i = 0; i < 3; i++) {
+                const sunbeam = document.createElement('div');
+                sunbeam.className = 'sunbeam';
+                
+                const posY = Math.random() * window.innerHeight * 0.3;
+                const delay = Math.random() * 4;
+                
+                sunbeam.style.top = `${posY}px`;
+                sunbeam.style.animationDelay = `${delay}s`;
+                
+                backgroundEffectsEl.appendChild(sunbeam);
+            }
+        }
+        
+        function createSnow() {
+            for (let i = 0; i < 50; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                
+                const posX = Math.random() * window.innerWidth;
+                const posY = Math.random() * -100;
+                const duration = 10 + Math.random() * 20;
+                const delay = Math.random() * 5;
+                const size = 3 + Math.random() * 4;
+                const opacity = 0.5 + Math.random() * 0.5;
+                
+                snowflake.style.left = `${posX}px`;
+                snowflake.style.top = `${posY}px`;
+                snowflake.style.width = `${size}px`;
+                snowflake.style.height = `${size}px`;
+                snowflake.style.animationDuration = `${duration}s`;
+                snowflake.style.animationDelay = `${delay}s`;
+                snowflake.style.opacity = opacity;
+                
+                backgroundEffectsEl.appendChild(snowflake);
+            }
+        }
+    </script>
+</body>
+</html>
